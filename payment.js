@@ -6,6 +6,7 @@ document.addEventListener("DOMContentLoaded", function () {
   const user = JSON.parse(localStorage.getItem("user"));
 
   const summary = document.getElementById("summary");
+  const reader = document.getElementById("reader");
 
   if (!members.length || totalAmount == 0) {
     summary.innerHTML = "<p>No payment data found.</p>";
@@ -21,13 +22,13 @@ document.addEventListener("DOMContentLoaded", function () {
   `;
 
   // ===============================
-  // IF RETURNED FROM UPI → SHOW CONFIRM BUTTON
+  // IF RETURNED FROM UPI
   // ===============================
   if (sessionStorage.getItem("upiRedirected")) {
 
     sessionStorage.removeItem("upiRedirected");
 
-    document.getElementById("reader").style.display = "none";
+    reader.style.display = "none";
 
     summary.innerHTML += `
       <p style="margin-top:15px;">Did you complete the payment?</p>
@@ -38,6 +39,7 @@ document.addEventListener("DOMContentLoaded", function () {
         border:none;
         border-radius:8px;
         cursor:pointer;
+        margin-top:10px;
       ">
         Payment Completed
       </button>
@@ -52,7 +54,7 @@ document.addEventListener("DOMContentLoaded", function () {
   summary.innerHTML += `<p>Scan Cab Driver QR below:</p>`;
 
   // ===============================
-  // QR SCANNER LOGIC
+  // START QR SCANNER
   // ===============================
 
   const html5QrCode = new Html5Qrcode("reader");
@@ -90,10 +92,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
   html5QrCode.start(
     { facingMode: "environment" },
-    {
-      fps: 10,
-      qrbox: 250
-    },
+    { fps: 10, qrbox: 250 },
     onScanSuccess,
     onScanFailure
   ).catch(err => console.log("Camera error:", err));
@@ -102,7 +101,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
 
 // ===============================
-// SAVE PAYMENT TO BACKEND
+// SAVE PAYMENT
 // ===============================
 
 async function savePayment() {
@@ -119,9 +118,7 @@ async function savePayment() {
 
     await fetch("https://hisabkitab-backend-g1q6.onrender.com/api/payment/create", {
       method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
+      headers: { "Content-Type": "application/json" },
       body: JSON.stringify({
         paidBy: user.id,
         paidFor: selectedMembers,
@@ -131,16 +128,15 @@ async function savePayment() {
       })
     });
 
-    alert("Payment logged successfully");
-
+    // Clear storage
     localStorage.removeItem("selectedMembers");
     localStorage.removeItem("totalAmount");
     localStorage.removeItem("selectedTime");
 
-    window.location.href = "members.html";
+    // 🔥 Now redirect to homepage
+    window.location.href = "homepage.html";
 
   } catch (error) {
     alert("Error saving payment");
   }
-
 }
