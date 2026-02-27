@@ -5,17 +5,24 @@
 document.addEventListener("DOMContentLoaded", function () {
 
   /* ===============================
-     PROTECT PAGES
+     PROTECT PAGES (FIXED VERSION)
   =============================== */
 
-  const currentPage = window.location.pathname;
+  const token = localStorage.getItem("token");
+
+  // Extract actual filename safely
+  let currentPage = window.location.pathname.split("/").pop();
+
+  // If running from root (like Netlify / Capacitor)
+  if (!currentPage) {
+    currentPage = "homepage.html";
+  }
+
   const publicPages = ["login.html", "signup.html"];
   const specialPages = ["payment.html"];
 
-  const isPublic = publicPages.some(page => currentPage.includes(page));
-  const isSpecial = specialPages.some(page => currentPage.includes(page));
-
-  const token = localStorage.getItem("token");
+  const isPublic = publicPages.includes(currentPage);
+  const isSpecial = specialPages.includes(currentPage);
 
   if (!isPublic && !isSpecial && !token) {
     window.location.href = "login.html";
@@ -67,7 +74,6 @@ document.addEventListener("DOMContentLoaded", function () {
           localStorage.setItem("token", data.token);
           localStorage.setItem("user", JSON.stringify(data.user));
 
-          alert("Login successful");
           window.location.href = "homepage.html";
         } else {
           alert(data.message);
@@ -138,7 +144,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
             if (paidById === user.id) {
 
-              // Others owe me
               if (!debtMap[person._id]) {
                 debtMap[person._id] = { name: person.name, amount: 0 };
               }
@@ -147,7 +152,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
             } else if (person._id === user.id) {
 
-              // I owe someone
               if (!debtMap[paidById]) {
                 debtMap[paidById] = { name: payment.paidBy.name, amount: 0 };
               }
@@ -207,7 +211,6 @@ function renderDebtCards(debtMap) {
     container.appendChild(row);
   });
 }
-
 
 // ===============================
 // OTHER FUNCTIONS
