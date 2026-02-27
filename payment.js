@@ -27,24 +27,32 @@ document.addEventListener("DOMContentLoaded", function () {
      QR SCANNER LOGIC
   =============================== */
 
-  const html5QrCode = new Html5Qrcode("reader");
+  const qrRegionId = "reader";
+  const html5QrCode = new Html5Qrcode(qrRegionId);
 
   function onScanSuccess(decodedText) {
 
     console.log("QR Detected:", decodedText);
 
-    html5QrCode.stop().catch(err => console.log(err));
+    // Stop camera after successful scan
+    html5QrCode.stop().then(() => {
+      console.log("Camera stopped");
+    }).catch(err => console.log(err));
 
+    // Check if scanned QR is UPI
     if (decodedText.startsWith("upi://")) {
 
       let finalUpiLink = decodedText;
 
+      // Replace amount if already present
       if (decodedText.includes("am=")) {
         finalUpiLink = decodedText.replace(/am=\d+(\.\d+)?/, `am=${totalAmount}`);
       } else {
+        // If no amount parameter exists, append it
         finalUpiLink += `&am=${totalAmount}`;
       }
 
+      // Redirect to UPI app
       window.location.href = finalUpiLink;
 
     } else {
@@ -53,23 +61,20 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   function onScanFailure(error) {
-    // silent ignore
+    // silent ignore scanning errors
   }
 
-  /* ===============================
-     START BACK CAMERA
-  =============================== */
-
+  // Start Camera
   html5QrCode.start(
-    { facingMode: "environment" },   // 🔥 Forces back camera
-    {
-      fps: 10,
-      qrbox: 250
-    },
-    onScanSuccess,
-    onScanFailure
-  ).catch(err => {
-    console.log("Camera error:", err);
-  });
+  { facingMode: "environment" },   // 🔥 Forces back camera
+  {
+    fps: 10,
+    qrbox: 250
+  },
+  onScanSuccess,
+  onScanFailure
+).catch(err => {
+  console.log("Camera error:", err);
+});
 
 });
