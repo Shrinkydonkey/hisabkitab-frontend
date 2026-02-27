@@ -53,7 +53,10 @@ document.addEventListener("DOMContentLoaded", function () {
       }
 
       // Redirect to UPI app
-      window.location.href = finalUpiLink;
+      const a = document.createElement("a");
+      a.href = finalUpiLink;
+      a.target = "_self";
+      a.click();
 
     } else {
       alert("Scanned QR is not a valid UPI QR.");
