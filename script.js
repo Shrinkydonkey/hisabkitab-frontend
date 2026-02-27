@@ -10,10 +10,14 @@ document.addEventListener("DOMContentLoaded", function () {
 
   const currentPage = window.location.pathname;
   const publicPages = ["login.html", "signup.html"];
+  const specialPages = ["payment.html"];
+
   const isPublic = publicPages.some(page => currentPage.includes(page));
+  const isSpecial = specialPages.some(page => currentPage.includes(page));
+
   const token = localStorage.getItem("token");
 
-  if (!isPublic && !token) {
+  if (!isPublic && !isSpecial && !token) {
     window.location.href = "login.html";
     return;
   }
