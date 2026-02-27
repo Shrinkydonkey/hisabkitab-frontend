@@ -1,8 +1,5 @@
 document.addEventListener("DOMContentLoaded", function () {
 
-  /* ===============================
-     GET DATA FROM LOCAL STORAGE
-  =============================== */
   const members = JSON.parse(localStorage.getItem("selectedMembers")) || [];
   const totalAmount = localStorage.getItem("totalAmount") || 0;
   const selectedTime = localStorage.getItem("selectedTime") || "Not Selected";
@@ -23,53 +20,55 @@ document.addEventListener("DOMContentLoaded", function () {
     <p>Scan Cab Driver QR below:</p>
   `;
 
-  /* ===============================
-     QR SCANNER LOGIC
-  =============================== */
+  // 🚨 Prevent redirect loop
+  if (sessionStorage.getItem("upiRedirected")) {
+    sessionStorage.removeItem("upiRedirected");
+    return; // Do not start scanner again
+  }
 
-  const qrRegionId = "reader";
-  const html5QrCode = new Html5Qrcode(qrRegionId);
+  const html5QrCode = new Html5Qrcode("reader");
+
+  let hasRedirected = false;
 
   function onScanSuccess(decodedText) {
 
-    console.log("QR Detected:", decodedText);
+    if (hasRedirected) return;
+    hasRedirected = true;
 
-    // Stop camera after successful scan
-    html5QrCode.stop().then(() => {
-      console.log("Camera stopped");
-    }).catch(err => console.log(err));
+    html5QrCode.stop().catch(err => console.log(err));
 
-    // Check if scanned QR is UPI
     if (decodedText.startsWith("upi://")) {
 
       const url = new URL(decodedText.replace("upi://pay?", "https://dummy?"));
       const payee = url.searchParams.get("pa");
       const name = url.searchParams.get("pn") || "CabDriver";
 
-      const cleanUpiLink = `upi://pay?pa=${payee}&pn=${encodeURIComponent(name)}&am=${totalAmount}&cu=INR`;
+      const cleanUpiLink =
+        `upi://pay?pa=${payee}&pn=${encodeURIComponent(name)}&am=${totalAmount}&cu=INR`;
 
-      window.location.replace(cleanUpiLink);
+      // Mark redirect
+      sessionStorage.setItem("upiRedirected", "true");
+
+      setTimeout(() => {
+        window.location.href = cleanUpiLink;
+      }, 300);
 
     } else {
-      alert("Scanned QR is not a valid UPI QR.");
+      alert("Scanned QR is not valid UPI.");
+      hasRedirected = false;
     }
   }
 
-  function onScanFailure(error) {
-    // silent ignore scanning errors
-  }
+  function onScanFailure(error) {}
 
-  // Start Camera
   html5QrCode.start(
-  { facingMode: "environment" },   // 🔥 Forces back camera
-  {
-    fps: 10,
-    qrbox: 250
-  },
-  onScanSuccess,
-  onScanFailure
-).catch(err => {
-  console.log("Camera error:", err);
-});
+    { facingMode: "environment" },
+    {
+      fps: 10,
+      qrbox: 250
+    },
+    onScanSuccess,
+    onScanFailure
+  ).catch(err => console.log("Camera error:", err));
 
 });
