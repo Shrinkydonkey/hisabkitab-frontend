@@ -25,9 +25,13 @@ document.addEventListener("DOMContentLoaded", function () {
   // CHECK IF RETURNED FROM UPI
   // ===============================
 
-  if (localStorage.getItem("paymentInProgress") === "true") {
+  document.addEventListener("visibilitychange", function () {
+
+  if (document.visibilityState === "visible" &&
+      localStorage.getItem("paymentInProgress") === "true") {
 
     localStorage.removeItem("paymentInProgress");
+
     reader.style.display = "none";
 
     summary.innerHTML += `
@@ -38,14 +42,16 @@ document.addEventListener("DOMContentLoaded", function () {
       </div>
     `;
 
-    document.getElementById("confirmBtn").addEventListener("click", savePayment);
+    document.getElementById("confirmBtn")
+      .addEventListener("click", savePayment);
 
-    document.getElementById("cancelBtn").addEventListener("click", () => {
-      window.location.href = "homepage.html";
-    });
-
-    return;
+    document.getElementById("cancelBtn")
+      .addEventListener("click", () => {
+        window.location.href = "homepage.html";
+      });
   }
+
+});
 
   
   // ===============================
