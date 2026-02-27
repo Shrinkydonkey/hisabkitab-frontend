@@ -42,21 +42,13 @@ document.addEventListener("DOMContentLoaded", function () {
     // Check if scanned QR is UPI
     if (decodedText.startsWith("upi://")) {
 
-      let finalUpiLink = decodedText;
+      const url = new URL(decodedText.replace("upi://pay?", "https://dummy?"));
+      const payee = url.searchParams.get("pa");
+      const name = url.searchParams.get("pn") || "CabDriver";
 
-      // Replace amount if already present
-      if (decodedText.includes("am=")) {
-        finalUpiLink = decodedText.replace(/am=\d+(\.\d+)?/, `am=${totalAmount}`);
-      } else {
-        // If no amount parameter exists, append it
-        finalUpiLink += `&am=${totalAmount}`;
-      }
+      const cleanUpiLink = `upi://pay?pa=${payee}&pn=${encodeURIComponent(name)}&am=${totalAmount}&cu=INR`;
 
-      // Redirect to UPI app
-      const a = document.createElement("a");
-      a.href = finalUpiLink;
-      a.target = "_self";
-      a.click();
+      window.location.replace(cleanUpiLink);
 
     } else {
       alert("Scanned QR is not a valid UPI QR.");
