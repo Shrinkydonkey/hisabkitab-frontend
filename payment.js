@@ -22,37 +22,32 @@ document.addEventListener("DOMContentLoaded", function () {
   `;
 
   // ===============================
-  // IF RETURNED FROM UPI
+  // CHECK IF RETURNED FROM UPI
   // ===============================
-  if (sessionStorage.getItem("upiRedirected")) {
 
-    sessionStorage.removeItem("upiRedirected");
+  if (localStorage.getItem("paymentInProgress") === "true") {
 
+    localStorage.removeItem("paymentInProgress");
     reader.style.display = "none";
 
     summary.innerHTML += `
-      <p style="margin-top:15px;">Did you complete the payment?</p>
-      <button id="confirmBtn" style="
-        padding:10px 20px;
-        background:#16a34a;
-        color:white;
-        border:none;
-        border-radius:8px;
-        cursor:pointer;
-        margin-top:10px;
-      ">
-        Payment Completed
-      </button>
+      <div style="margin-top:20px;">
+        <p><strong>Did you complete the payment?</strong></p>
+        <button id="confirmBtn">Yes, Completed</button>
+        <button id="cancelBtn">Cancel</button>
+      </div>
     `;
 
-    document.getElementById("confirmBtn")
-      .addEventListener("click", savePayment);
+    document.getElementById("confirmBtn").addEventListener("click", savePayment);
+
+    document.getElementById("cancelBtn").addEventListener("click", () => {
+      window.location.href = "homepage.html";
+    });
 
     return;
   }
 
-  summary.innerHTML += `<p>Scan Cab Driver QR below:</p>`;
-
+  
   // ===============================
   // START QR SCANNER
   // ===============================
@@ -76,7 +71,7 @@ document.addEventListener("DOMContentLoaded", function () {
       const cleanUpiLink =
         `upi://pay?pa=${payee}&pn=${encodeURIComponent(name)}&am=${totalAmount}&cu=INR`;
 
-      sessionStorage.setItem("upiRedirected", "true");
+      localStorage.setItem("paymentInProgress", "true");
 
       setTimeout(() => {
         window.location.href = cleanUpiLink;
