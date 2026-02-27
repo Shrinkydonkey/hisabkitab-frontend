@@ -10,22 +10,12 @@ document.addEventListener("DOMContentLoaded", function () {
 
   const token = localStorage.getItem("token");
 
-  // Extract actual filename safely
-  let currentPage = window.location.pathname.split("/").pop();
+  const isLoginPage = document.getElementById("loginForm");
+  const isSignupPage = document.getElementById("signupForm");
+  const isPaymentPage = window.location.pathname.includes("payment");
 
-  // If running from root (like Netlify / Capacitor)
-  if (!currentPage) {
-    currentPage = "homepage.html";
-  }
-
-  const publicPages = ["login.html", "signup.html"];
-  const specialPages = ["payment.html"];
-
-  const isPublic = publicPages.includes(currentPage);
-  const isSpecial = specialPages.includes(currentPage);
-
-  if (!isPublic && !isSpecial && !token) {
-    window.location.href = "login.html";
+  if (!token && !isLoginPage && !isSignupPage && !isPaymentPage) {
+    window.location.replace("login.html");
     return;
   }
 
@@ -74,7 +64,7 @@ document.addEventListener("DOMContentLoaded", function () {
           localStorage.setItem("token", data.token);
           localStorage.setItem("user", JSON.stringify(data.user));
 
-          window.location.href = "homepage.html";
+          window.location.replace("homepage.html");
         } else {
           alert(data.message);
         }
@@ -110,7 +100,7 @@ document.addEventListener("DOMContentLoaded", function () {
 
         if (res.ok) {
           alert("Signup successful! Please login.");
-          window.location.href = "login.html";
+          window.location.replace("login.html");
         } else {
           alert(data.message);
         }
@@ -239,5 +229,5 @@ function submitSelection() {
     return;
   }
 
-  window.location.href = "payment.html";
+  window.location.replace("payment.html");
 }
