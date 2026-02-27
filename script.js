@@ -1,11 +1,13 @@
 // ===============================
-// PROTECT PAGES + PAGE LOGIC
+// MAIN APP SCRIPT
 // ===============================
+
 document.addEventListener("DOMContentLoaded", function () {
 
   /* ===============================
-     Protect pages (except login/signup)
+     PROTECT PAGES
   =============================== */
+
   const currentPage = window.location.pathname;
   const publicPages = ["login.html", "signup.html"];
   const isPublic = publicPages.some(page => currentPage.includes(page));
@@ -17,9 +19,11 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   /* ===============================
-     Show Welcome Name
+     SHOW WELCOME NAME
   =============================== */
+
   const user = JSON.parse(localStorage.getItem("user"));
+
   if (user) {
     const welcomeText = document.getElementById("welcomeText");
     const authLinks = document.getElementById("authLinks");
@@ -36,6 +40,7 @@ document.addEventListener("DOMContentLoaded", function () {
   /* ===============================
      LOGIN FORM
   =============================== */
+
   const loginForm = document.getElementById("loginForm");
 
   if (loginForm) {
@@ -48,9 +53,7 @@ document.addEventListener("DOMContentLoaded", function () {
       try {
         const res = await fetch("https://hisabkitab-backend-g1q6.onrender.com/api/auth/login", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ email, password })
         });
 
@@ -75,6 +78,7 @@ document.addEventListener("DOMContentLoaded", function () {
   /* ===============================
      SIGNUP FORM
   =============================== */
+
   const signupForm = document.getElementById("signupForm");
 
   if (signupForm) {
@@ -88,9 +92,7 @@ document.addEventListener("DOMContentLoaded", function () {
       try {
         const res = await fetch("https://hisabkitab-backend-g1q6.onrender.com/api/auth/signup", {
           method: "POST",
-          headers: {
-            "Content-Type": "application/json"
-          },
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ name, email, password })
         });
 
@@ -110,74 +112,103 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   /* ===============================
-   MEMBERS PAGE - SHOW USER CARD
-=============================== */
-const membersContainer = document.getElementById("membersContainer");
+     MEMBERS PAGE - CALCULATE DEBT
+  =============================== */
 
-if (membersContainer) {
+  const membersContainer = document.getElementById("membersContainer");
 
-  const loggedInUser = JSON.parse(localStorage.getItem("user"));
+  if (membersContainer && user) {
 
-  fetch("https://hisabkitab-backend-g1q6.onrender.com/api/auth/users")
-    .then(res => res.json())
-    .then(users => {
+    fetch("https://hisabkitab-backend-g1q6.onrender.com/api/payment/all")
+      .then(res => res.json())
+      .then(payments => {
 
-      membersContainer.innerHTML = "";
+        const debtMap = {};
 
-      if (!loggedInUser) return;
+        payments.forEach(payment => {
 
-      // Create Main Card for Logged-in User
-      const mainCard = document.createElement("div");
-      mainCard.className = "member";
+          const paidById = payment.paidBy._id;
+          const amount = payment.amountPerPerson;
 
-      mainCard.innerHTML = `
-        <button class="member-name">
-          <span class="member-initial">${loggedInUser.name.charAt(0).toUpperCase()}</span>
-          <span class="member-title">${loggedInUser.name}</span>
-        </button>
-        <div class="member-details" style="display:none;">
-          <div id="otherMembersList"></div>
-        </div>
-      `;
+          payment.paidFor.forEach(person => {
 
-      membersContainer.appendChild(mainCard);
+            if (paidById === user.id) {
 
-      const detailsDiv = mainCard.querySelector(".member-details");
-      const nameBtn = mainCard.querySelector(".member-name");
-      const otherMembersList = mainCard.querySelector("#otherMembersList");
+              // Others owe me
+              if (!debtMap[person._id]) {
+                debtMap[person._id] = { name: person.name, amount: 0 };
+              }
 
-      // Toggle card
-      nameBtn.addEventListener("click", () => {
-        detailsDiv.style.display =
-          detailsDiv.style.display === "block" ? "none" : "block";
-      });
+              debtMap[person._id].amount += amount;
 
-      // Add Other Members Below
-      users.forEach(user => {
+            } else if (person._id === user.id) {
 
-        if (user._id !== loggedInUser.id) {
+              // I owe someone
+              if (!debtMap[paidById]) {
+                debtMap[paidById] = { name: payment.paidBy.name, amount: 0 };
+              }
 
-          const row = document.createElement("div");
-          row.className = "member-row";
+              debtMap[paidById].amount -= amount;
+            }
 
-          row.innerHTML = `
-            <span>${user.name}</span>
-            <span>₹0</span>
-          `;
+          });
 
-          otherMembersList.appendChild(row);
-        }
+        });
 
-      });
+        renderDebtCards(debtMap);
 
-    })
-    .catch(err => console.log("Error loading members:", err));
+      })
+      .catch(err => console.log("Error loading payments:", err));
   }
+
 });
+
+
+// ===============================
+// RENDER DEBT CARDS
+// ===============================
+
+function renderDebtCards(debtMap) {
+
+  const container = document.getElementById("membersContainer");
+  container.innerHTML = "";
+
+  if (Object.keys(debtMap).length === 0) {
+    container.innerHTML = "<p>No transactions yet.</p>";
+    return;
+  }
+
+  Object.values(debtMap).forEach(entry => {
+
+    const row = document.createElement("div");
+    row.className = "member-row";
+
+    const amountColor =
+      entry.amount > 0 ? "#16a34a" :
+      entry.amount < 0 ? "#dc2626" :
+      "#6b7280";
+
+    const status =
+      entry.amount > 0 ? "owes you" :
+      entry.amount < 0 ? "you owe" :
+      "settled";
+
+    row.innerHTML = `
+      <span>${entry.name}</span>
+      <span style="color:${amountColor}; font-weight:bold;">
+        ₹${Math.abs(entry.amount)} (${status})
+      </span>
+    `;
+
+    container.appendChild(row);
+  });
+}
+
 
 // ===============================
 // OTHER FUNCTIONS
 // ===============================
+
 function toggleSidebar() {
   document.getElementById("sidebar")?.classList.toggle("active");
 }
