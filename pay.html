@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Pay</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="stylesheet" href="pay.css" />
+</head>
+<body>
+  <h2 class="page-title">Select payment time</h2>
+
+  <div class="page">
+    <div class="pay-card">
+      <p class="page-tagline">Choose a time slot and then select members</p>
+
+      <div class="time-container">
+        <button class="time-btn" onclick="selectTime('Morning')">Morning</button>
+        <button class="time-btn" onclick="selectTime('Evening')">Evening</button>
+      </div>
+
+      <div class="selected-time" id="selectedTimeText"></div>
+
+      <div class="members-section" id="membersSection">
+        <h3>Select members</h3>
+        <div class="member-list" id="memberList"></div>
+        <button class="submit-btn" onclick="submitSelection()">Submit</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="pay.js"></script>
+</body>
+</html>

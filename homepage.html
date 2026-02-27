@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Hisab Kitab</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <!-- Sidebar -->
+  <div class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <span>Menu</span>
+      <button class="close-btn" onclick="toggleSidebar()">✕</button>
+    </div>
+
+    <div class="sidebar-user">
+        <span id="welcomeText"></span>
+    </div>
+
+    <div class="sidebar-links">
+      <a href="login.html">Login</a>
+      <a href="signup.html">Sign Up</a>
+    </div>
+  </div>
+
+  <!-- Menu Button -->
+  <button class="menu-toggle" onclick="toggleSidebar()">☰</button>
+
+  <h2 class="heading">Hisab Kitab</h2>
+
+  <div class="page">
+    <div class="home-card">
+      <p class="tagline">Quick access to members and payments</p>
+
+      <div class="items-row">
+        <div class="item">
+          <a href="members.html" class="item-link">
+            <button id="member" class="btn"></button>
+            <span class="label">Member's list</span>
+            <span class="label-sub">View and manage all members</span>
+          </a>
+        </div>
+
+        <div class="item">
+          <a href="pay.html" class="item-link">
+            <button id="pay" class="btn"></button>
+            <span class="label">Pay now</span>
+            <span class="label-sub">Record a new payment</span>
+          </a>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script src="script.js"></script>
+</body>
+</html>

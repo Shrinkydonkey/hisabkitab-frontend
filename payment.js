@@ -1,0 +1,88 @@
+document.addEventListener("DOMContentLoaded", function () {
+
+  /* ===============================
+     GET DATA FROM LOCAL STORAGE
+  =============================== */
+  const members = JSON.parse(localStorage.getItem("selectedMembers")) || [];
+  const totalAmount = localStorage.getItem("totalAmount") || 0;
+  const selectedTime = localStorage.getItem("selectedTime") || "Not Selected";
+
+  const summary = document.getElementById("summary");
+
+  if (!members.length || totalAmount == 0) {
+    summary.innerHTML = "<p>No payment data found.</p>";
+    return;
+  }
+
+  summary.innerHTML = `
+    <p><strong>Time:</strong> ${selectedTime}</p>
+    <p><strong>Total Members:</strong> ${members.length}</p>
+    <p style="font-size:18px; font-weight:bold; color:#16a34a;">
+      Total Amount: ₹${totalAmount}
+    </p>
+    <p>Scan Cab Driver QR below:</p>
+  `;
+
+  /* ===============================
+     QR SCANNER LOGIC
+  =============================== */
+
+  const qrRegionId = "reader";
+  const html5QrCode = new Html5Qrcode(qrRegionId);
+
+  function onScanSuccess(decodedText) {
+
+    console.log("QR Detected:", decodedText);
+
+    // Stop camera after successful scan
+    html5QrCode.stop().then(() => {
+      console.log("Camera stopped");
+    }).catch(err => console.log(err));
+
+    // Check if scanned QR is UPI
+    if (decodedText.startsWith("upi://")) {
+
+      let finalUpiLink = decodedText;
+
+      // Replace amount if already present
+      if (decodedText.includes("am=")) {
+        finalUpiLink = decodedText.replace(/am=\d+(\.\d+)?/, `am=${totalAmount}`);
+      } else {
+        // If no amount parameter exists, append it
+        finalUpiLink += `&am=${totalAmount}`;
+      }
+
+      // Redirect to UPI app
+      window.location.href = finalUpiLink;
+
+    } else {
+      alert("Scanned QR is not a valid UPI QR.");
+    }
+  }
+
+  function onScanFailure(error) {
+    // silent ignore scanning errors
+  }
+
+  // Start Camera
+  Html5Qrcode.getCameras().then(devices => {
+    if (devices && devices.length) {
+
+      html5QrCode.start(
+        devices[0].id,
+        {
+          fps: 10,
+          qrbox: 250
+        },
+        onScanSuccess,
+        onScanFailure
+      );
+
+    } else {
+      alert("No camera found.");
+    }
+  }).catch(err => {
+    console.log("Camera error:", err);
+  });
+
+});
