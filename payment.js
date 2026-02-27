@@ -3,6 +3,7 @@ document.addEventListener("DOMContentLoaded", function () {
   const members = JSON.parse(localStorage.getItem("selectedMembers")) || [];
   const totalAmount = localStorage.getItem("totalAmount") || 0;
   const selectedTime = localStorage.getItem("selectedTime") || "Not Selected";
+  const user = JSON.parse(localStorage.getItem("user"));
 
   const summary = document.getElementById("summary");
 
@@ -17,17 +18,44 @@ document.addEventListener("DOMContentLoaded", function () {
     <p style="font-size:18px; font-weight:bold; color:#16a34a;">
       Total Amount: ₹${totalAmount}
     </p>
-    <p>Scan Cab Driver QR below:</p>
   `;
 
-  // 🚨 Prevent redirect loop
+  // ===============================
+  // IF RETURNED FROM UPI → SHOW CONFIRM BUTTON
+  // ===============================
   if (sessionStorage.getItem("upiRedirected")) {
+
     sessionStorage.removeItem("upiRedirected");
-    return; // Do not start scanner again
+
+    document.getElementById("reader").style.display = "none";
+
+    summary.innerHTML += `
+      <p style="margin-top:15px;">Did you complete the payment?</p>
+      <button id="confirmBtn" style="
+        padding:10px 20px;
+        background:#16a34a;
+        color:white;
+        border:none;
+        border-radius:8px;
+        cursor:pointer;
+      ">
+        Payment Completed
+      </button>
+    `;
+
+    document.getElementById("confirmBtn")
+      .addEventListener("click", savePayment);
+
+    return;
   }
 
-  const html5QrCode = new Html5Qrcode("reader");
+  summary.innerHTML += `<p>Scan Cab Driver QR below:</p>`;
 
+  // ===============================
+  // QR SCANNER LOGIC
+  // ===============================
+
+  const html5QrCode = new Html5Qrcode("reader");
   let hasRedirected = false;
 
   function onScanSuccess(decodedText) {
@@ -46,7 +74,6 @@ document.addEventListener("DOMContentLoaded", function () {
       const cleanUpiLink =
         `upi://pay?pa=${payee}&pn=${encodeURIComponent(name)}&am=${totalAmount}&cu=INR`;
 
-      // Mark redirect
       sessionStorage.setItem("upiRedirected", "true");
 
       setTimeout(() => {
@@ -72,3 +99,48 @@ document.addEventListener("DOMContentLoaded", function () {
   ).catch(err => console.log("Camera error:", err));
 
 });
+
+
+// ===============================
+// SAVE PAYMENT TO BACKEND
+// ===============================
+
+async function savePayment() {
+
+  const user = JSON.parse(localStorage.getItem("user"));
+  const selectedMembers = JSON.parse(localStorage.getItem("selectedMembers"));
+  const totalAmount = localStorage.getItem("totalAmount");
+  const selectedTime = localStorage.getItem("selectedTime");
+
+  let amountPerPerson =
+    selectedTime.includes("Morning") ? 60 : 65;
+
+  try {
+
+    await fetch("https://hisabkitab-backend-g1q6.onrender.com/api/payment/create", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        paidBy: user.id,
+        paidFor: selectedMembers,
+        amountPerPerson,
+        totalAmount,
+        time: selectedTime
+      })
+    });
+
+    alert("Payment logged successfully");
+
+    localStorage.removeItem("selectedMembers");
+    localStorage.removeItem("totalAmount");
+    localStorage.removeItem("selectedTime");
+
+    window.location.href = "members.html";
+
+  } catch (error) {
+    alert("Error saving payment");
+  }
+
+}
